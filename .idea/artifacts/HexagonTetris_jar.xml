@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" build-on-make="true" name="HexagonTetris:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/HexagonTetris_jar</output-path>
+    <root id="archive" name="HexagonTetris.jar">
+      <element id="module-output" name="HexagonTetris" />
+    </root>
+  </artifact>
+</component>
