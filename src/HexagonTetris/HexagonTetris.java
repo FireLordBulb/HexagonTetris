@@ -30,16 +30,17 @@ public class HexagonTetris extends JPanel {
 	};
 	private static final Coordinate oneStepDown = new Coordinate(0, 2);
 	private static final int LINE_CLEAR_ANIMATION_TIME = 1000;
-	// Changeable state.
+	// Final instance fields (collections).
 	private final Hexagon[][] hexagonGrid = new Hexagon[COLUMNS][ROWS];
 	private final List<Integer> completeHalfRows = new ArrayList<>();
+	// Changeable state.
+	private Timer fallTimer = null;
 	private Coordinate[] currentPiece = null;
 	private PieceType currentPieceType = null;
 	private int currentRotation = 0;
 	private boolean pieceIsAtLowest = false;
-	private Timer timer = new Timer();
 	private boolean isInAnimation = false;
-	private int timePerFall = 1000;
+	private int timePerFall = 800;
 
 	// Constructor. |------------------------------------------------------------------------------------------
 	public HexagonTetris(){
@@ -224,7 +225,7 @@ public class HexagonTetris extends JPanel {
 				}
 			});
 			repaint();
-			timer.cancel();
+			fallTimer.cancel();
 			new Timer().schedule(new TimerTask(){
 				@Override
 				public void run(){
@@ -248,14 +249,15 @@ public class HexagonTetris extends JPanel {
 		startFallTimer();
 		isInAnimation = false;
 	}
+	// TODO add parameter and overload for delay.
 	private void startFallTimer(){
-		timer = new Timer();
-		timer.scheduleAtFixedRate(new TimerTask(){
+		fallTimer = new Timer();
+		fallTimer.scheduleAtFixedRate(new TimerTask(){
 			@Override
 			public void run(){
 				tryMovePieceDown();
 			}
-		}, timePerFall, timePerFall);
+		}, 0, timePerFall);
 	}
 
 	private void removeHexagon(int column, int halfRow){
