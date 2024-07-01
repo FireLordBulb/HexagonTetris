@@ -249,7 +249,6 @@ public class HexagonTetris extends JPanel {
 		startFallTimer();
 		isInAnimation = false;
 	}
-	// TODO add parameter and overload for delay.
 	private void startFallTimer(){
 		fallTimer = new Timer();
 		fallTimer.scheduleAtFixedRate(new TimerTask(){
@@ -257,7 +256,7 @@ public class HexagonTetris extends JPanel {
 			public void run(){
 				tryMovePieceDown();
 			}
-		}, 0, timePerFall);
+		}, timePerFall, timePerFall);
 	}
 
 	private void removeHexagon(int column, int halfRow){
