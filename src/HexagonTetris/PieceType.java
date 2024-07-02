@@ -2,21 +2,23 @@ package HexagonTetris;
 import java.awt.Color;
 
 public class PieceType {
-    private static final Coordinate LEFT_SPAWN_POSITION = new Coordinate(4, 4), RIGHT_SPAWN_POSITION = new Coordinate(5, 5);
+    private static final Coordinate LEFT_SPAWN_POSITION = new Coordinate(4, 4), RIGHT_SPAWN_POSITION = new Coordinate(5, 3);
     private static final Coordinate NEXT_PIECE_GRID_POSITION = new Coordinate(1, 5);
 
     // Using a matrix to rotate without doubling isn't possible, because that would require non-integer values in the matrix.
     private static final Coordinate ROTATE_AND_DOUBLE_MATRIX_X = new Coordinate(+1, +3), ROTATE_AND_DOUBLE_MATRIX_Y = new Coordinate(-1, +1);
     public final Color color;
+    public final int spawnRotation;
     public final int hexagonCount;
     public final Coordinate spawnPosition;
     public final Coordinate nextPieceGridPosition;
     private final Coordinate[][] rotations;
-    public PieceType(int rgb, boolean useRightSpawn, Coordinate... defaultRotation){
-        this(new Color(rgb), useRightSpawn, defaultRotation);
+    public PieceType(int rgb, int spawnRotation, boolean useRightSpawn, Coordinate... defaultRotation){
+        this(new Color(rgb), spawnRotation, useRightSpawn, defaultRotation);
     }
-    public PieceType(Color color, boolean useRightSpawn, Coordinate... defaultRotation){
+    public PieceType(Color color, int spawnRotation, boolean useRightSpawn, Coordinate... defaultRotation){
         this.color = color;
+        this.spawnRotation = spawnRotation;
         hexagonCount = defaultRotation.length;
 		spawnPosition = useRightSpawn ? RIGHT_SPAWN_POSITION : LEFT_SPAWN_POSITION;
         nextPieceGridPosition = NEXT_PIECE_GRID_POSITION;

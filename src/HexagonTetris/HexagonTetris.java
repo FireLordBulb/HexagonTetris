@@ -12,14 +12,15 @@ public class HexagonTetris extends JPanel {
 	public static final Color BackgroundColor = new Color(0x202020);
 	// Private static constants.
 	private static final int LEFT = -1, RIGHT = +1, UP = -1, DOWN = +1;
+	private static final int BOARD_X = 150, BOARD_Y = 40;
 	private static final int HEXAGON_SIZE = 20;
-	private static final int COLUMNS = 10, ROWS = 22, INVISIBLE_ROWS = 2, HALF_ROWS = ROWS*2;
-	private static final int NEXT_PIECE_COLUMNS = 3, NEXT_PIECE_ROWS = 4;
+	private static final int COLUMNS = 10, ROWS = 21, INVISIBLE_ROWS = 1, HALF_ROWS = ROWS*2;
+	private static final int NEXT_WINDOW_COLUMNS = 3, NEXT_ROWS = 4, NEXT_COLUMN_OFFSET = 18, NEXT_ROW_OFFSET = 6;
 	private static final Coordinate oneStepDown = new Coordinate(0, 2);
 	private static final int LINE_CLEAR_ANIMATION_TIME = 1000;
 	// Final instance fields (collections).
 	private final HexagonGrid board = new HexagonGrid(COLUMNS, ROWS, HEXAGON_SIZE, 0, -INVISIBLE_ROWS);
-	private final HexagonGrid nextPieceWindow = new HexagonGrid(NEXT_PIECE_COLUMNS, NEXT_PIECE_ROWS, HEXAGON_SIZE, 18, 6-INVISIBLE_ROWS);
+	private final HexagonGrid nextWindow = new HexagonGrid(NEXT_WINDOW_COLUMNS, NEXT_ROWS, HEXAGON_SIZE, NEXT_COLUMN_OFFSET, NEXT_ROW_OFFSET-INVISIBLE_ROWS);
 	private final List<Integer> completeHalfRows = new ArrayList<>();
 	// Changeable state.
 	private Timer fallTimer = null;
@@ -38,7 +39,7 @@ public class HexagonTetris extends JPanel {
 				handleInput(event);
 			}
 		});
-		nextPiece = new Piece(nextPieceWindow, false);
+		nextPiece = new Piece(nextWindow, false);
 		spawnNextPiece();
 		startFallTimer();
 	}
@@ -48,9 +49,9 @@ public class HexagonTetris extends JPanel {
 		super.paintComponent(g);
 		Graphics2D g2d = (Graphics2D)g;
 		g2d.setStroke(new BasicStroke(1));
-		g2d.translate(150, 40);
+		g2d.translate(BOARD_X, BOARD_Y);
 		board.draw(g2d, INVISIBLE_ROWS, false);
-		nextPieceWindow.draw(g2d, 0, true);
+		nextWindow.draw(g2d, 0, true);
 	}
 	// Input methods. |------------------------------------------------------------------------------------------
 	private void handleInput(KeyEvent event){
@@ -112,7 +113,7 @@ public class HexagonTetris extends JPanel {
 	private void spawnNextPiece(){
 		nextPiece.setGrid(board, true);
 		currentPiece = nextPiece;
-		nextPiece = new Piece(nextPieceWindow, false);
+		nextPiece = new Piece(nextWindow, false);
 		repaint();
 	}
 
