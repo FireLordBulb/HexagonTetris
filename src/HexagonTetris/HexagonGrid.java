@@ -18,7 +18,7 @@ public class HexagonGrid {
 			int xPosition = x*xOffset;
 			double extraYOffset = yHalfOffset*(x%2);
 			for (int y = 0; y < grid[x].length; y++){
-				grid[x][y] = new Hexagon(xPosition,  y*yOffset + extraYOffset, hexagonSize);
+				grid[x][y] = new Hexagon(xPosition, y*yOffset + extraYOffset, hexagonSize);
 			}
 		}
 	}
@@ -32,6 +32,9 @@ public class HexagonGrid {
 			Arrays.stream(grid[i], startAtRow, grid[i].length).forEach(hexagon -> hexagon.draw(g));
 		}
 		g.translate(-xDrawOffset, -yDrawOffset);
+	}
+	public void clear(){
+		Arrays.stream(grid).forEach(hexagons -> Arrays.stream(hexagons).forEach(hexagon -> hexagon.color = null));
 	}
 	public void removeHexagon(int column, int halfRow){
 		for (int y = halfRow; y > halfRow % 2; y -= 2){

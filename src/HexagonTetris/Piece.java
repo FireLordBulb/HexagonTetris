@@ -28,7 +28,7 @@ public class Piece {
 		rotationIndex = 0;
 		hexagonCoordinates = new Coordinate[type.hexagonCount];
 		grid = hexagonGrid;
-		addToGrid(gridIsPlayBoard);
+		tryAddToGrid(gridIsPlayBoard);
 	}
 
 	public boolean tryMove(Coordinate moveStep){
@@ -75,24 +75,30 @@ public class Piece {
 		rotationIndex = newRotationIndex;
 	}
 
-	public void setGrid(HexagonGrid hexagonGrid, boolean gridIsPlayBoard){
+	public boolean tryChangeGrid(HexagonGrid hexagonGrid, boolean gridIsPlayBoard){
 		for (Coordinate coordinate : hexagonCoordinates){
+
 			grid.setHexagonColor(coordinate, null);
 		}
 		grid = hexagonGrid;
-		addToGrid(gridIsPlayBoard);
+		return tryAddToGrid(gridIsPlayBoard);
 	}
 
-	private void addToGrid(boolean gridIsPlayBoard){
+	private boolean tryAddToGrid(boolean gridIsPlayBoard){
 		if (gridIsPlayBoard){
 			rotationIndex = type.spawnRotation;
 		}
 		Coordinate[] pieceRelativeCoordinates = type.getRotation(rotationIndex);
 		Coordinate pivotAbsolutePosition = gridIsPlayBoard ? type.spawnPosition : type.nextPieceGridPosition;
+		boolean addFailed = false;
 		for (int i = 0; i < hexagonCoordinates.length; i++){
 			hexagonCoordinates[i] = Coordinate.add(pieceRelativeCoordinates[i], pivotAbsolutePosition);
+			if (grid.getHexagonColor(hexagonCoordinates[i]) != null){
+				addFailed = true;
+			}
 			grid.setHexagonColor(hexagonCoordinates[i], type.color);
 		}
+		return !addFailed;
 	}
 
 	private boolean isBlocked(){

@@ -19,7 +19,7 @@ public class Hexagon {
     public void draw(Graphics g){
         g.setColor(color == null ? Color.BLACK : color);
         g.fillPolygon(xPoints, yPoints, NUM_POINTS);
-        g.setColor(HexagonTetris.BackgroundColor);
+        g.setColor(HexagonTetris.BACKGROUND_COLOR);
         g.drawPolygon(xPoints, yPoints, NUM_POINTS);
     }
 }

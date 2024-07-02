@@ -3,13 +3,15 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.awt.geom.AffineTransform;
 import java.util.*;
 import java.util.List;
 import java.util.Timer;
 
 public class HexagonTetris extends JPanel {
 	// Public static constants.
-	public static final Color BackgroundColor = new Color(0x202020);
+	public static final Color BACKGROUND_COLOR = new Color(0x202020);
+	public static final Color GAME_OVER_SHADOW_COLOR = new Color(0, 0, 0, 160);
 	// Private static constants.
 	private static final int LEFT = -1, RIGHT = +1, UP = -1, DOWN = +1;
 	private static final int BOARD_X = 150, BOARD_Y = 40;
@@ -28,11 +30,12 @@ public class HexagonTetris extends JPanel {
 	private Piece nextPiece;
 	private boolean pieceIsAtLowest = false;
 	private boolean isInAnimation = false;
+	private boolean gameIsOver = false;
 	private int timePerFall = 800;
 	// Constructor. |------------------------------------------------------------------------------------------
 	public HexagonTetris(){
 		setFocusable(true);
-		setBackground(BackgroundColor);
+		setBackground(BACKGROUND_COLOR);
 		addKeyListener(new KeyAdapter(){
 			@Override
 			public void keyPressed(KeyEvent event){
@@ -52,12 +55,29 @@ public class HexagonTetris extends JPanel {
 		g2d.translate(BOARD_X, BOARD_Y);
 		board.draw(g2d, INVISIBLE_ROWS, false);
 		nextWindow.draw(g2d, 0, true);
+		if (!gameIsOver){
+			return;
+		}
+		g2d.setTransform(new AffineTransform());
+		g2d.setColor(GAME_OVER_SHADOW_COLOR);
+		g2d.fillRect(0, 0, getParent().getWidth(), getParent().getHeight());
+		g2d.setColor(Color.WHITE);
+		g2d.drawString("Game Over!", getParent().getWidth()/2-65, getParent().getHeight()/2-55);
+		g2d.drawString("Press R to restart!", getParent().getWidth()/2-85, getParent().getHeight()/2-40);
 	}
 	// Input methods. |------------------------------------------------------------------------------------------
 	private void handleInput(KeyEvent event){
 		if (isInAnimation){
 			return;
 		}
+		if (gameIsOver){
+			if (event.getKeyCode() == KeyEvent.VK_R){
+				restartGame();
+			}
+			return;
+		}
+		// TODO: Add pausing.
+		// Gameplay inputs
 		switch(event.getKeyCode()){
 			case KeyEvent.VK_LEFT, KeyEvent.VK_A -> movePieceToSide(LEFT);
 			case KeyEvent.VK_RIGHT, KeyEvent.VK_D -> movePieceToSide(RIGHT);
@@ -67,7 +87,17 @@ public class HexagonTetris extends JPanel {
 			case KeyEvent.VK_SPACE -> hardDrop();
 		}
 	}
-	// Movement methods. |------------------------------------------------------------------------------------------
+
+	private void restartGame(){
+		board.clear();
+		nextWindow.clear();
+		gameIsOver = false;
+		timePerFall = 800;
+		nextPiece = new Piece(nextWindow, false);
+		spawnNextPiece();
+		startFallTimer();
+	}
+
 	private void movePieceToSide(int side){
 		Coordinate moveStep = new Coordinate(side, pieceIsAtLowest ? UP : DOWN);
 		boolean moveWasBlocked = tryMovePiece(moveStep);
@@ -82,12 +112,14 @@ public class HexagonTetris extends JPanel {
 		// Toggle this boolean to make the piece alternate between moving to the side and slightly up and moving to the side and slightly down.
 		pieceIsAtLowest = !pieceIsAtLowest;
 	}
+
 	private void movePieceDownManually(){
 		// Stop and start the fall timer to ensure it takes the full period before then next move down.
 		fallTimer.cancel();
 		startFallTimer();
 		tryMovePieceDown();
 	}
+
 	private void hardDrop(){
 		// Stop and start the fall timer to ensure it takes the full period before then next move down.
 		fallTimer.cancel();
@@ -96,6 +128,7 @@ public class HexagonTetris extends JPanel {
 		// noinspection StatementWithEmptyBody
 		while (!tryMovePieceDown());
 	}
+	// Movement methods. |------------------------------------------------------------------------------------------
 	private boolean tryMovePieceDown(){
 		boolean fallWasBlocked = tryMovePiece(oneStepDown);
 		if (fallWasBlocked){
@@ -120,7 +153,8 @@ public class HexagonTetris extends JPanel {
 	}
 	// Other methods. |------------------------------------------------------------------------------------------
 	private void spawnNextPiece(){
-		nextPiece.setGrid(board, true);
+		boolean spawnWasSuccessful = nextPiece.tryChangeGrid(board, true);
+		gameIsOver = !spawnWasSuccessful;
 		currentPiece = nextPiece;
 		nextPiece = new Piece(nextWindow, false);
 		repaint();
@@ -141,6 +175,9 @@ public class HexagonTetris extends JPanel {
 		removeIsolatedHalfRows();
 		if (completeHalfRows.isEmpty()){
 			spawnNextPiece();
+			if (gameIsOver){
+				fallTimer.cancel();
+			}
 			return;
 		}
 		startLineClearAnimation();
@@ -202,7 +239,9 @@ public class HexagonTetris extends JPanel {
 		}
 		completeHalfRows.clear();
 		spawnNextPiece();
-		startFallTimer();
+		if (!gameIsOver){
+			startFallTimer();
+		}
 		isInAnimation = false;
 	}
 }
