@@ -11,7 +11,7 @@ public class HexagonTetris extends JPanel {
 	// Public static constants.
 	public static final Color BackgroundColor = new Color(0x202020);
 	// Private static constants.
-	private static final Random RANDOM = new Random();
+	private static final int LEFT = -1, RIGHT = +1, UP = -1, DOWN = +1;
 	private static final int HEXAGON_SIZE = 20;
 	private static final int COLUMNS = 10, ROWS = 22, INVISIBLE_ROWS = 2, HALF_ROWS = ROWS*2;
 	private static final int NEXT_PIECE_COLUMNS = 3, NEXT_PIECE_ROWS = 4;
@@ -34,27 +34,12 @@ public class HexagonTetris extends JPanel {
 		setBackground(BackgroundColor);
 		addKeyListener(new KeyAdapter(){
 			@Override
-			public void keyPressed(KeyEvent evt){
-				if (isInAnimation){
-					return;
-				}
-				switch(evt.getKeyCode()){
-					case KeyEvent.VK_LEFT, KeyEvent.VK_A -> movePieceToSide(false);
-					case KeyEvent.VK_RIGHT, KeyEvent.VK_D -> movePieceToSide(true);
-					case KeyEvent.VK_UP, KeyEvent.VK_W, KeyEvent.VK_X -> rotatePiece(+1);
-					case KeyEvent.VK_Z -> rotatePiece(-1);
-					case KeyEvent.VK_DOWN, KeyEvent.VK_S -> tryMovePieceDown();
-					case KeyEvent.VK_SPACE -> {
-						// The while loop is empty because tryMovePieceDown has side effects.
-						// noinspection StatementWithEmptyBody
-						while (!tryMovePieceDown());
-					}
-				}
+			public void keyPressed(KeyEvent event){
+				handleInput(event);
 			}
 		});
 		nextPiece = new Piece(nextPieceWindow, false);
-		spawnNewPiece();
-		repaint();
+		spawnNextPiece();
 		startFallTimer();
 	}
 	// Overridden methods. |------------------------------------------------------------------------------------------
@@ -67,20 +52,39 @@ public class HexagonTetris extends JPanel {
 		board.draw(g2d, INVISIBLE_ROWS, false);
 		nextPieceWindow.draw(g2d, 0, true);
 	}
-	// Meat and bones methods. |------------------------------------------------------------------------------------------
-	private void movePieceToSide(boolean sideIsRight){
-		Coordinate moveStep = new Coordinate(sideIsRight ? +1 : -1, pieceIsAtLowest ? -1 : +1);
+	// Input methods. |------------------------------------------------------------------------------------------
+	private void handleInput(KeyEvent event){
+		if (isInAnimation){
+			return;
+		}
+		switch(event.getKeyCode()){
+			case KeyEvent.VK_LEFT, KeyEvent.VK_A -> movePieceToSide(LEFT);
+			case KeyEvent.VK_RIGHT, KeyEvent.VK_D -> movePieceToSide(RIGHT);
+			case KeyEvent.VK_Z -> rotatePiece(LEFT);
+			case KeyEvent.VK_UP, KeyEvent.VK_W, KeyEvent.VK_X -> rotatePiece(RIGHT);
+			case KeyEvent.VK_DOWN, KeyEvent.VK_S -> tryMovePieceDown();
+			case KeyEvent.VK_SPACE -> hardDrop();
+		}
+	}
+	// Movement methods. |------------------------------------------------------------------------------------------
+	private void movePieceToSide(int side){
+		Coordinate moveStep = new Coordinate(side, pieceIsAtLowest ? UP : DOWN);
 		boolean moveWasBlocked = tryMovePiece(moveStep);
 		if (moveWasBlocked){
 			// If the move was slightly upwards and was blocked, try again but slightly downwards.
-			if (moveStep.y == -1){
-				moveStep.y = +1;
+			if (moveStep.y == UP){
+				moveStep.y = DOWN;
 				tryMovePiece(moveStep);
 			}
 			return;
 		}
 		// Toggle this boolean to make the piece alternate between moving to the side and slightly up and moving to the side and slightly down.
 		pieceIsAtLowest = !pieceIsAtLowest;
+	}
+	private void hardDrop(){
+		// The while loop is empty because tryMovePieceDown has side effects.
+		// noinspection StatementWithEmptyBody
+		while (!tryMovePieceDown());
 	}
 	private boolean tryMovePieceDown(){
 		boolean fallWasBlocked = tryMovePiece(oneStepDown);
@@ -91,21 +95,10 @@ public class HexagonTetris extends JPanel {
 		}
 		return fallWasBlocked;
 	}
+
 	private boolean tryMovePiece(Coordinate moveStep){
-		for (Coordinate coordinate : currentPiece.getCoordinates()){
-			board.setHexagonColor(coordinate, null);
-			coordinate.add(moveStep);
-		}
-		boolean moveWasBlocked = currentPiece.isBlocked();
-		if (moveWasBlocked){
-			for (Coordinate coordinate : currentPiece.getCoordinates()){
-				coordinate.subtract(moveStep);
-				board.setHexagonColor(coordinate, currentPiece.type.color);
-			}
-		} else {
-			for (Coordinate coordinate : currentPiece.getCoordinates()){
-				board.setHexagonColor(coordinate, currentPiece.type.color);
-			}
+		boolean moveWasBlocked = currentPiece.tryMove(moveStep);
+		if (!moveWasBlocked){
 			repaint();
 		}
 		return moveWasBlocked;
@@ -115,12 +108,52 @@ public class HexagonTetris extends JPanel {
 		currentPiece.rotate(rotationChange);
 		repaint();
 	}
-	private void spawnNewPiece(){
+	// Other methods. |------------------------------------------------------------------------------------------
+	private void spawnNextPiece(){
 		nextPiece.setGrid(board, true);
 		currentPiece = nextPiece;
 		nextPiece = new Piece(nextPieceWindow, false);
+		repaint();
 	}
+
+	private void startFallTimer(){
+		fallTimer = new Timer();
+		fallTimer.scheduleAtFixedRate(new TimerTask(){
+			@Override
+			public void run(){
+				tryMovePieceDown();
+			}
+		}, timePerFall, timePerFall);
+	}
+
 	private void findCompleteLines(){
+		findFullHalfRows();
+		removeIsolatedHalfRows();
+		if (completeHalfRows.isEmpty()){
+			spawnNextPiece();
+			return;
+		}
+		startLineClearAnimation();
+	}
+
+	private void startLineClearAnimation(){
+		isInAnimation = true;
+		completeHalfRows.forEach(halfRow -> {
+			for (int column = halfRow%2; column < COLUMNS; column += 2){
+				board.setHexagonColor(column, halfRow, Color.WHITE);
+			}
+		});
+		repaint();
+		fallTimer.cancel();
+		new Timer().schedule(new TimerTask(){
+			@Override
+			public void run(){
+				clearCompleteLines();
+			}
+		}, LINE_CLEAR_ANIMATION_TIME);
+	}
+
+	private void findFullHalfRows(){
 		for (int halfRow = HALF_ROWS-1; halfRow >= 0; halfRow--){
 			boolean rowIsFull = true;
 			for (int column = halfRow%2; column < COLUMNS; column += 2){
@@ -133,6 +166,9 @@ public class HexagonTetris extends JPanel {
 				completeHalfRows.add(halfRow);
 			}
 		}
+	}
+
+	private void removeIsolatedHalfRows(){
 		for (int i = completeHalfRows.size()-1; i >= 0; i--){
 			boolean hasAdjacentHalfRow = false;
 			if (i < completeHalfRows.size()-1){
@@ -145,52 +181,18 @@ public class HexagonTetris extends JPanel {
 				completeHalfRows.remove(i);
 			}
 		}
-		if (!completeHalfRows.isEmpty()){
-			isInAnimation = true;
-			completeHalfRows.forEach(halfRow -> {
-				for (int column = halfRow%2; column < COLUMNS; column += 2){
-					board.setHexagonColor(column, halfRow, Color.WHITE);
-				}
-			});
-			repaint();
-			fallTimer.cancel();
-			new Timer().schedule(new TimerTask(){
-				@Override
-				public void run(){
-					clearCompleteLines();
-				}
-			}, LINE_CLEAR_ANIMATION_TIME);
-		} else {
-			spawnNewPiece();
-		}
 	}
+
 	private void clearCompleteLines(){
 		for (int i = completeHalfRows.size()-1; i >= 0; i--){
 			int halfRow = completeHalfRows.get(i);
 			for (int column = halfRow % 2; column < COLUMNS; column += 2){
-				removeHexagon(column, halfRow);
+				board.removeHexagon(column, halfRow);
 			}
 		}
 		completeHalfRows.clear();
-		repaint();
-		spawnNewPiece();
+		spawnNextPiece();
 		startFallTimer();
 		isInAnimation = false;
-	}
-	private void startFallTimer(){
-		fallTimer = new Timer();
-		fallTimer.scheduleAtFixedRate(new TimerTask(){
-			@Override
-			public void run(){
-				tryMovePieceDown();
-			}
-		}, timePerFall, timePerFall);
-	}
-
-	private void removeHexagon(int column, int halfRow){
-		for (int y = halfRow; y > halfRow % 2; y -= 2){
-			board.setHexagonColor(column, y, board.getHexagonColor(column, y - 2));
-		}
-		board.setHexagonColor(column, halfRow % 2, null);
 	}
 }

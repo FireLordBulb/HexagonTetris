@@ -1,7 +1,6 @@
 package HexagonTetris;
 
 import java.awt.*;
-import java.awt.geom.AffineTransform;
 import java.util.Arrays;
 
 public class HexagonGrid {
@@ -33,6 +32,12 @@ public class HexagonGrid {
 			Arrays.stream(grid[i], startAtRow, grid[i].length).forEach(hexagon -> hexagon.draw(g));
 		}
 		g.translate(-xDrawOffset, -yDrawOffset);
+	}
+	public void removeHexagon(int column, int halfRow){
+		for (int y = halfRow; y > halfRow % 2; y -= 2){
+			setHexagonColor(column, y, getHexagonColor(column, y - 2));
+		}
+		setHexagonColor(column, halfRow % 2, null);
 	}
 	public void setHexagonColor(Coordinate coordinate, Color color){
 		setHexagonColor(coordinate.x , coordinate.y, color);

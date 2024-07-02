@@ -16,7 +16,7 @@ public class Piece {
 		new PieceType(0x6610BB, false, new Coordinate(+1, -3), new Coordinate(-0, -2), new Coordinate(0, 0), new Coordinate(0, 2)), // J
 		new PieceType(0x2020BB, true , new Coordinate(-1, -3), new Coordinate(-0, -2), new Coordinate(0, 0), new Coordinate(0, 2))  // L
 	};
-	public final PieceType type;
+	private final PieceType type;
 	private final Coordinate[] hexagonCoordinates;
 	public int rotationIndex;
 	private HexagonGrid grid;
@@ -30,6 +30,26 @@ public class Piece {
 		grid = hexagonGrid;
 		addToGrid(gridIsPlayBoard);
 	}
+
+	public boolean tryMove(Coordinate moveStep){
+		for (Coordinate coordinate : hexagonCoordinates){
+			grid.setHexagonColor(coordinate, null);
+			coordinate.add(moveStep);
+		}
+		boolean moveWasBlocked = isBlocked();
+		if (moveWasBlocked){
+			for (Coordinate coordinate : hexagonCoordinates){
+				coordinate.subtract(moveStep);
+				grid.setHexagonColor(coordinate, type.color);
+			}
+		} else {
+			for (Coordinate coordinate : hexagonCoordinates){
+				grid.setHexagonColor(coordinate, type.color);
+			}
+		}
+		return moveWasBlocked;
+	}
+
 	public void rotate(int rotationChange){
 		int newRotationIndex = (((rotationIndex + rotationChange) % Hexagon.NUM_POINTS) + Hexagon.NUM_POINTS) % Hexagon.NUM_POINTS;
 		Coordinate[] currentRotationCoordinates = type.getRotation(rotationIndex);
@@ -55,14 +75,6 @@ public class Piece {
 		rotationIndex = newRotationIndex;
 	}
 
-	private void addToGrid(boolean gridIsPlayBoard){
-		Coordinate[] pieceRelativeCoordinates = type.getRotation(rotationIndex);
-		for (int i = 0; i < hexagonCoordinates.length; i++){
-			hexagonCoordinates[i] = Coordinate.add(pieceRelativeCoordinates[i], gridIsPlayBoard ? type.spawnPosition : type.nextPieceGridPosition);
-			grid.setHexagonColor(hexagonCoordinates[i], type.color);
-		}
-	}
-	// Getters and Setters.
 	public void setGrid(HexagonGrid hexagonGrid, boolean gridIsPlayBoard){
 		for (Coordinate coordinate : hexagonCoordinates){
 			grid.setHexagonColor(coordinate, null);
@@ -70,7 +82,16 @@ public class Piece {
 		grid = hexagonGrid;
 		addToGrid(gridIsPlayBoard);
 	}
-	public boolean isBlocked(){
+
+	private void addToGrid(boolean gridIsPlayBoard){
+		Coordinate[] pieceRelativeCoordinates = type.getRotation(rotationIndex);
+		for (int i = 0; i < hexagonCoordinates.length; i++){
+			hexagonCoordinates[i] = Coordinate.add(pieceRelativeCoordinates[i], gridIsPlayBoard ? type.spawnPosition : type.nextPieceGridPosition);
+			grid.setHexagonColor(hexagonCoordinates[i], type.color);
+		}
+	}
+
+	private boolean isBlocked(){
 		for (Coordinate coordinate : hexagonCoordinates){
 			Hexagon hexagon = grid.getHexagonAt(coordinate);
 			if (hexagon == null || grid.getHexagonColor(coordinate) != null){
@@ -78,11 +99,5 @@ public class Piece {
 			}
 		}
 		return false;
-	}
-	public Coordinate getCoordinate(int index){
-		return hexagonCoordinates[index];
-	}
-	public Coordinate[] getCoordinates(){
-		return hexagonCoordinates;
 	}
 }
