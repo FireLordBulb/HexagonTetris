@@ -8,6 +8,7 @@ public class PieceType {
     // Using a matrix to rotate without doubling isn't possible, because that would require non-integer values in the matrix.
     private static final Coordinate ROTATE_AND_DOUBLE_MATRIX_X = new Coordinate(+1, +3), ROTATE_AND_DOUBLE_MATRIX_Y = new Coordinate(-1, +1);
     public final Color color;
+    public final int hexagonCount;
     public final Coordinate spawnPosition;
     public final Coordinate nextPieceGridPosition;
     private final Coordinate[][] rotations;
@@ -16,6 +17,7 @@ public class PieceType {
     }
     public PieceType(Color color, boolean useRightSpawn, Coordinate... defaultRotation){
         this.color = color;
+        hexagonCount = defaultRotation.length;
 		spawnPosition = useRightSpawn ? RIGHT_SPAWN_POSITION : LEFT_SPAWN_POSITION;
         nextPieceGridPosition = NEXT_PIECE_GRID_POSITION;
         rotations = generateRotations(defaultRotation);

@@ -19,23 +19,30 @@ public class Piece {
 	public final PieceType type;
 	private final Coordinate[] hexagonCoordinates;
 	public int rotationIndex;
-	public Piece(boolean doSpawnImmediately, HexagonGrid grid){
-		this(pieceTypes[RANDOM.nextInt(pieceTypes.length)], doSpawnImmediately, grid);
+	private HexagonGrid grid;
+	public Piece(HexagonGrid grid, boolean gridIsPlayBoard){
+		this(pieceTypes[RANDOM.nextInt(pieceTypes.length)], grid, gridIsPlayBoard);
 	}
-	public Piece(PieceType pieceType, boolean doSpawnImmediately, HexagonGrid grid){
+	public Piece(PieceType pieceType, HexagonGrid hexagonGrid, boolean gridIsPlayBoard){
 		type = pieceType;
 		rotationIndex = 0;
+		hexagonCoordinates = new Coordinate[type.hexagonCount];
+		grid = hexagonGrid;
+		addToGrid(gridIsPlayBoard);
+	}
+	private void addToGrid(boolean gridIsPlayBoard){
 		Coordinate[] pieceRelativeCoordinates = type.getRotation(rotationIndex);
-		hexagonCoordinates = new Coordinate[pieceRelativeCoordinates.length];
 		for (int i = 0; i < hexagonCoordinates.length; i++){
-			hexagonCoordinates[i] = Coordinate.add(pieceRelativeCoordinates[i], doSpawnImmediately ? type.spawnPosition : type.nextPieceGridPosition);
+			hexagonCoordinates[i] = Coordinate.add(pieceRelativeCoordinates[i], gridIsPlayBoard ? type.spawnPosition : type.nextPieceGridPosition);
 			grid.setHexagonColor(hexagonCoordinates[i], type.color);
 		}
 	}
-	public void removeFromGrid(HexagonGrid grid){
+	public void setGrid(HexagonGrid hexagonGrid, boolean gridIsPlayBoard){
 		for (Coordinate coordinate : hexagonCoordinates){
 			grid.setHexagonColor(coordinate, null);
 		}
+		grid = hexagonGrid;
+		addToGrid(gridIsPlayBoard);
 	}
 	public Coordinate getCoordinate(int index){
 		return hexagonCoordinates[index];

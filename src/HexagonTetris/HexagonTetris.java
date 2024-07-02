@@ -52,7 +52,7 @@ public class HexagonTetris extends JPanel {
 				}
 			}
 		});
-		nextPiece = new Piece(false, nextPieceWindow);
+		nextPiece = new Piece(nextPieceWindow, false);
 		spawnNewPiece();
 		repaint();
 		startFallTimer();
@@ -96,14 +96,7 @@ public class HexagonTetris extends JPanel {
 			board.setHexagonColor(coordinate, null);
 			coordinate.add(moveStep);
 		}
-		boolean moveWasBlocked = false;
-		for (Coordinate coordinate : currentPiece.getCoordinates()){
-			Hexagon hexagon = board.getHexagonAt(coordinate);
-			if (hexagon == null || board.getHexagonColor(coordinate) != null){
-				moveWasBlocked = true;
-				break;
-			}
-		}
+		boolean moveWasBlocked = pieceIsBlocked();
 		if (moveWasBlocked){
 			for (Coordinate coordinate : currentPiece.getCoordinates()){
 				coordinate.subtract(moveStep);
@@ -122,22 +115,14 @@ public class HexagonTetris extends JPanel {
 		int newRotationIndex = (((currentPiece.rotationIndex + rotationChange) % Hexagon.NUM_POINTS) + Hexagon.NUM_POINTS) % Hexagon.NUM_POINTS;
 		Coordinate[] currentRotationCoordinates = currentPiece.type.getRotation(currentPiece.rotationIndex);
 		Coordinate[] newRotationCoordinates = currentPiece.type.getRotation(newRotationIndex);
-		for (int i = 0; i < currentPiece.getCoordinates().length; i++){
+		for (int i = 0; i < currentPiece.type.hexagonCount; i++){
 			Coordinate coordinate = currentPiece.getCoordinate(i);
 			board.setHexagonColor(coordinate, null);
 			coordinate.subtract(currentRotationCoordinates[i]);
 			coordinate.add(newRotationCoordinates[i]);
 		}
-		boolean rotationWasBlocked = false;
-		for (Coordinate coordinate : currentPiece.getCoordinates()){
-			Hexagon hexagon = board.getHexagonAt(coordinate);
-			if (hexagon == null || board.getHexagonColor(coordinate) != null){
-				rotationWasBlocked = true;
-				break;
-			}
-		}
-		if (rotationWasBlocked){
-			for (int i = 0; i < currentPiece.getCoordinates().length; i++){
+		if (pieceIsBlocked()){
+			for (int i = 0; i < currentPiece.type.hexagonCount; i++){
 				Coordinate coordinate = currentPiece.getCoordinate(i);
 				coordinate.subtract(newRotationCoordinates[i]);
 				coordinate.add(currentRotationCoordinates[i]);
@@ -151,13 +136,20 @@ public class HexagonTetris extends JPanel {
 		currentPiece.rotationIndex = newRotationIndex;
 		repaint();
 	}
-
-	private void spawnNewPiece(){
-		nextPiece.removeFromGrid(nextPieceWindow);
-		currentPiece = new Piece(nextPiece.type, true, board);
-		nextPiece = new Piece(false, nextPieceWindow);
+	private boolean pieceIsBlocked(){
+		for (Coordinate coordinate : currentPiece.getCoordinates()){
+			Hexagon hexagon = board.getHexagonAt(coordinate);
+			if (hexagon == null || board.getHexagonColor(coordinate) != null){
+				return true;
+			}
+		}
+		return false;
 	}
-
+	private void spawnNewPiece(){
+		nextPiece.setGrid(board, true);
+		currentPiece = nextPiece;
+		nextPiece = new Piece(nextPieceWindow, false);
+	}
 	private void findCompleteLines(){
 		for (int halfRow = HALF_ROWS-1; halfRow >= 0; halfRow--){
 			boolean rowIsFull = true;
