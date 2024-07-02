@@ -75,7 +75,7 @@ public class HexagonTetris extends JPanel {
 		repaint();
 		startFallTimer();
 	}
-	// Drawing methods. |------------------------------------------------------------------------------------------
+	// Overridden methods. |------------------------------------------------------------------------------------------
 	@Override
 	protected void paintComponent(Graphics g){
 		super.paintComponent(g);
@@ -85,7 +85,6 @@ public class HexagonTetris extends JPanel {
 		board.draw(g2d, INVISIBLE_ROWS, false);
 		nextPieceWindow.draw(g2d, 0, true);
 	}
-
 	// Meat and bones methods. |------------------------------------------------------------------------------------------
 	private void movePieceToSide(boolean sideIsRight){
 		Coordinate moveStep = new Coordinate(sideIsRight ? +1 : -1, pieceIsAtLowest ? -1 : +1);

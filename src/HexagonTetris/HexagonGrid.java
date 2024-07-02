@@ -2,6 +2,7 @@ package HexagonTetris;
 
 import java.awt.*;
 import java.awt.geom.AffineTransform;
+import java.util.Arrays;
 
 public class HexagonGrid {
 	private static final double SQRT3 = Math.sqrt(3);
@@ -25,14 +26,11 @@ public class HexagonGrid {
 	public void draw(Graphics g, int skipRows, boolean doSkipFirstHalfRow){
 		g.translate(xDrawOffset, yDrawOffset);
 		for (int i = 0; i < grid.length; i++){
-			Hexagon[] column = grid[i];
-			for (int j = skipRows; j < column.length; j++){
-				if (doSkipFirstHalfRow && j == skipRows && i%2 == 0){
-					continue;
-				}
-				Hexagon hexagon = column[j];
-				hexagon.draw(g);
+			int startAtRow = skipRows;
+			if (doSkipFirstHalfRow && i%2 == 0){
+				startAtRow++;
 			}
+			Arrays.stream(grid[i], startAtRow, grid[i].length).forEach(hexagon -> hexagon.draw(g));
 		}
 		g.translate(-xDrawOffset, -yDrawOffset);
 	}
