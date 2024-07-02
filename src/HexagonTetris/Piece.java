@@ -30,6 +30,31 @@ public class Piece {
 		grid = hexagonGrid;
 		addToGrid(gridIsPlayBoard);
 	}
+	public void rotate(int rotationChange){
+		int newRotationIndex = (((rotationIndex + rotationChange) % Hexagon.NUM_POINTS) + Hexagon.NUM_POINTS) % Hexagon.NUM_POINTS;
+		Coordinate[] currentRotationCoordinates = type.getRotation(rotationIndex);
+		Coordinate[] newRotationCoordinates = type.getRotation(newRotationIndex);
+		for (int i = 0; i < type.hexagonCount; i++){
+			Coordinate coordinate = hexagonCoordinates[i];
+			grid.setHexagonColor(coordinate, null);
+			coordinate.subtract(currentRotationCoordinates[i]);
+			coordinate.add(newRotationCoordinates[i]);
+		}
+		if (isBlocked()){
+			for (int i = 0; i < type.hexagonCount; i++){
+				Coordinate coordinate = hexagonCoordinates[i];
+				coordinate.subtract(newRotationCoordinates[i]);
+				coordinate.add(currentRotationCoordinates[i]);
+				grid.setHexagonColor(coordinate, type.color);
+			}
+			return;
+		}
+		for (Coordinate coordinate : hexagonCoordinates){
+			grid.setHexagonColor(coordinate, type.color);
+		}
+		rotationIndex = newRotationIndex;
+	}
+
 	private void addToGrid(boolean gridIsPlayBoard){
 		Coordinate[] pieceRelativeCoordinates = type.getRotation(rotationIndex);
 		for (int i = 0; i < hexagonCoordinates.length; i++){
@@ -37,12 +62,22 @@ public class Piece {
 			grid.setHexagonColor(hexagonCoordinates[i], type.color);
 		}
 	}
+	// Getters and Setters.
 	public void setGrid(HexagonGrid hexagonGrid, boolean gridIsPlayBoard){
 		for (Coordinate coordinate : hexagonCoordinates){
 			grid.setHexagonColor(coordinate, null);
 		}
 		grid = hexagonGrid;
 		addToGrid(gridIsPlayBoard);
+	}
+	public boolean isBlocked(){
+		for (Coordinate coordinate : hexagonCoordinates){
+			Hexagon hexagon = grid.getHexagonAt(coordinate);
+			if (hexagon == null || grid.getHexagonColor(coordinate) != null){
+				return true;
+			}
+		}
+		return false;
 	}
 	public Coordinate getCoordinate(int index){
 		return hexagonCoordinates[index];

@@ -96,7 +96,7 @@ public class HexagonTetris extends JPanel {
 			board.setHexagonColor(coordinate, null);
 			coordinate.add(moveStep);
 		}
-		boolean moveWasBlocked = pieceIsBlocked();
+		boolean moveWasBlocked = currentPiece.isBlocked();
 		if (moveWasBlocked){
 			for (Coordinate coordinate : currentPiece.getCoordinates()){
 				coordinate.subtract(moveStep);
@@ -112,38 +112,8 @@ public class HexagonTetris extends JPanel {
 	}
 
 	private void rotatePiece(int rotationChange){
-		int newRotationIndex = (((currentPiece.rotationIndex + rotationChange) % Hexagon.NUM_POINTS) + Hexagon.NUM_POINTS) % Hexagon.NUM_POINTS;
-		Coordinate[] currentRotationCoordinates = currentPiece.type.getRotation(currentPiece.rotationIndex);
-		Coordinate[] newRotationCoordinates = currentPiece.type.getRotation(newRotationIndex);
-		for (int i = 0; i < currentPiece.type.hexagonCount; i++){
-			Coordinate coordinate = currentPiece.getCoordinate(i);
-			board.setHexagonColor(coordinate, null);
-			coordinate.subtract(currentRotationCoordinates[i]);
-			coordinate.add(newRotationCoordinates[i]);
-		}
-		if (pieceIsBlocked()){
-			for (int i = 0; i < currentPiece.type.hexagonCount; i++){
-				Coordinate coordinate = currentPiece.getCoordinate(i);
-				coordinate.subtract(newRotationCoordinates[i]);
-				coordinate.add(currentRotationCoordinates[i]);
-				board.setHexagonColor(coordinate, currentPiece.type.color);
-			}
-			return;
-		}
-		for (Coordinate coordinate : currentPiece.getCoordinates()){
-			board.setHexagonColor(coordinate, currentPiece.type.color);
-		}
-		currentPiece.rotationIndex = newRotationIndex;
+		currentPiece.rotate(rotationChange);
 		repaint();
-	}
-	private boolean pieceIsBlocked(){
-		for (Coordinate coordinate : currentPiece.getCoordinates()){
-			Hexagon hexagon = board.getHexagonAt(coordinate);
-			if (hexagon == null || board.getHexagonColor(coordinate) != null){
-				return true;
-			}
-		}
-		return false;
 	}
 	private void spawnNewPiece(){
 		nextPiece.setGrid(board, true);
