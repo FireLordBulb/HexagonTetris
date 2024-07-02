@@ -2,7 +2,7 @@ package HexagonTetris;
 import java.awt.Graphics;
 import java.awt.Color;
 
-class Hexagon {
+public class Hexagon {
     public static final int NUM_POINTS = 6;
     public static final double ROTATION_PER_POINT = Math.TAU/NUM_POINTS ;
     public final int[] xPoints, yPoints;

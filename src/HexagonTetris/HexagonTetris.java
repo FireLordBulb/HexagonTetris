@@ -3,6 +3,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.awt.geom.AffineTransform;
 import java.util.*;
 import java.util.List;
 import java.util.Timer;
@@ -12,10 +13,9 @@ public class HexagonTetris extends JPanel {
 	public static final Color BackgroundColor = new Color(0x202020);
 	// Private static constants.
 	private static final Random RANDOM = new Random();
-	private static final double SQRT3 = Math.sqrt(3);
 	private static final int HEXAGON_SIZE = 20;
-	private static final int COLUMNS = 10, ROWS = 24, INVISIBLE_ROWS = 4;
-	private static final int HALF_ROWS = ROWS*2;
+	private static final int COLUMNS = 10, ROWS = 24, INVISIBLE_ROWS = 4, HALF_ROWS = ROWS*2;
+	private static final int NEXT_PIECE_COLUMNS = 3, NEXT_PIECE_ROWS = 4;
 	private static final PieceType[] pieceTypes = {
 		new PieceType(0xEE5510, false, new Coordinate(-0, -4), new Coordinate(-0, -2), new Coordinate(0, 0), new Coordinate(0, 2)), // I
 		new PieceType(0xDDAA10, false, new Coordinate(-1, -1), new Coordinate(+1, -1), new Coordinate(0, 0), new Coordinate(0, 2)), // Y
@@ -31,12 +31,15 @@ public class HexagonTetris extends JPanel {
 	private static final Coordinate oneStepDown = new Coordinate(0, 2);
 	private static final int LINE_CLEAR_ANIMATION_TIME = 1000;
 	// Final instance fields (collections).
-	private final Hexagon[][] hexagonGrid = new Hexagon[COLUMNS][ROWS];
+	private final HexagonGrid board = new HexagonGrid(COLUMNS, ROWS, HEXAGON_SIZE, 0, 0);
+	private final HexagonGrid nextPieceWindow = new HexagonGrid(NEXT_PIECE_COLUMNS, NEXT_PIECE_ROWS, HEXAGON_SIZE, 18, 6);
 	private final List<Integer> completeHalfRows = new ArrayList<>();
 	// Changeable state.
 	private Timer fallTimer = null;
 	private Coordinate[] currentPiece = null;
+	private Coordinate[] nextPiece = null;
 	private PieceType currentPieceType = null;
+	private PieceType nextPieceType = null;
 	private int currentRotation = 0;
 	private boolean pieceIsAtLowest = false;
 	private boolean isInAnimation = false;
@@ -66,35 +69,23 @@ public class HexagonTetris extends JPanel {
 				}
 			}
 		});
-		{
-			int xOffset = HEXAGON_SIZE*3/2;
-			double yOffset = HEXAGON_SIZE*SQRT3;
-			double yHalfOffset = yOffset/2;
-			for (int x = 0; x < hexagonGrid.length; x++){
-				int xPosition = x*xOffset;
-				double extraYOffset = yHalfOffset*(x%2);
-				for (int y = 0; y < hexagonGrid[x].length; y++){
-					hexagonGrid[x][y] = new Hexagon(xPosition,  y*yOffset + extraYOffset, HEXAGON_SIZE);
-				}
-			}
-		}
+		nextPieceType = pieceTypes[RANDOM.nextInt(pieceTypes.length)];
+		nextPiece = new Coordinate[0];
 		spawnNewPiece();
 		repaint();
 		startFallTimer();
 	}
-	// Overridden methods. |------------------------------------------------------------------------------------------
+	// Drawing methods. |------------------------------------------------------------------------------------------
 	@Override
 	protected void paintComponent(Graphics g){
 		super.paintComponent(g);
-		((Graphics2D)g).setStroke(new BasicStroke(1));
-		g.translate(150, -100);
-		for (Hexagon[] hexagons : hexagonGrid){
-			for (int i = INVISIBLE_ROWS; i < hexagons.length; i++){
-				Hexagon hexagon = hexagons[i];
-				hexagon.draw(g);
-			}
-		}
+		Graphics2D g2d = (Graphics2D)g;
+		g2d.setStroke(new BasicStroke(1));
+		g2d.translate(150, -100);
+		board.draw(g2d, INVISIBLE_ROWS, false);
+		nextPieceWindow.draw(g2d, 0, true);
 	}
+
 	// Meat and bones methods. |------------------------------------------------------------------------------------------
 	private void movePieceToSide(boolean sideIsRight){
 		Coordinate moveStep = new Coordinate(sideIsRight ? +1 : -1, pieceIsAtLowest ? -1 : +1);
@@ -121,13 +112,13 @@ public class HexagonTetris extends JPanel {
 	}
 	private boolean tryMovePiece(Coordinate moveStep){
 		for (Coordinate coordinate : currentPiece){
-			setHexagonColor(coordinate, null);
+			board.setHexagonColor(coordinate, null);
 			coordinate.add(moveStep);
 		}
 		boolean moveWasBlocked = false;
 		for (Coordinate coordinate : currentPiece){
-			Hexagon hexagon = getHexagonAt(coordinate);
-			if (hexagon == null || getHexagonColor(coordinate) != null){
+			Hexagon hexagon = board.getHexagonAt(coordinate);
+			if (hexagon == null || board.getHexagonColor(coordinate) != null){
 				moveWasBlocked = true;
 				break;
 			}
@@ -135,11 +126,11 @@ public class HexagonTetris extends JPanel {
 		if (moveWasBlocked){
 			for (Coordinate coordinate : currentPiece){
 				coordinate.subtract(moveStep);
-				setHexagonColor(coordinate, currentPieceType.color);
+				board.setHexagonColor(coordinate, currentPieceType.color);
 			}
 		} else {
 			for (Coordinate coordinate : currentPiece){
-				setHexagonColor(coordinate, currentPieceType.color);
+				board.setHexagonColor(coordinate, currentPieceType.color);
 			}
 			repaint();
 		}
@@ -152,14 +143,14 @@ public class HexagonTetris extends JPanel {
 		Coordinate[] newRotationCoordinates = currentPieceType.getRotation(newRotation);
 		for (int i = 0; i < currentPiece.length; i++){
 			Coordinate coordinate = currentPiece[i];
-			setHexagonColor(coordinate, null);
+			board.setHexagonColor(coordinate, null);
 			coordinate.subtract(currentRotationCoordinates[i]);
 			coordinate.add(newRotationCoordinates[i]);
 		}
 		boolean rotationWasBlocked = false;
 		for (Coordinate coordinate : currentPiece){
-			Hexagon hexagon = getHexagonAt(coordinate);
-			if (hexagon == null || getHexagonColor(coordinate) != null){
+			Hexagon hexagon = board.getHexagonAt(coordinate);
+			if (hexagon == null || board.getHexagonColor(coordinate) != null){
 				rotationWasBlocked = true;
 				break;
 			}
@@ -169,34 +160,44 @@ public class HexagonTetris extends JPanel {
 				Coordinate coordinate = currentPiece[i];
 				coordinate.subtract(newRotationCoordinates[i]);
 				coordinate.add(currentRotationCoordinates[i]);
-				setHexagonColor(coordinate, currentPieceType.color);
+				board.setHexagonColor(coordinate, currentPieceType.color);
 			}
 			return;
 		}
 		for (Coordinate coordinate : currentPiece){
-			setHexagonColor(coordinate, currentPieceType.color);
+			board.setHexagonColor(coordinate, currentPieceType.color);
 		}
 		currentRotation = newRotation;
 		repaint();
 	}
 
 	private void spawnNewPiece(){
-		currentPieceType = pieceTypes[RANDOM.nextInt(pieceTypes.length)];
+		currentPieceType = nextPieceType;
 		currentRotation = 0;
 		Coordinate[] pieceRelativeCoordinates = currentPieceType.getRotation(currentRotation);
 		currentPiece = new Coordinate[pieceRelativeCoordinates.length];
 		for (int i = 0; i < currentPiece.length; i++){
 			currentPiece[i] = Coordinate.add(pieceRelativeCoordinates[i], currentPieceType.spawnPosition);
-			setHexagonColor(currentPiece[i], currentPieceType.color);
+			board.setHexagonColor(currentPiece[i], currentPieceType.color);
+		}
+		//Next piece handling
+		for (Coordinate coordinate : nextPiece){
+			nextPieceWindow.setHexagonColor(coordinate, null);
+		}
+		nextPieceType = pieceTypes[RANDOM.nextInt(pieceTypes.length)];
+		Coordinate[] nextPieceRelativeCoordinates = nextPieceType.getRotation(0);
+		nextPiece = new Coordinate[nextPieceRelativeCoordinates.length];
+		for (int i = 0; i < nextPiece.length; i++){
+			nextPiece[i] = Coordinate.add(nextPieceRelativeCoordinates[i], nextPieceType.nextPieceGridPosition);
+			nextPieceWindow.setHexagonColor(nextPiece[i], nextPieceType.color);
 		}
 	}
 
-	// TODO: Clear lines that don't match the square double array grid.
 	private void findCompleteLines(){
 		for (int halfRow = HALF_ROWS-1; halfRow >= 0; halfRow--){
 			boolean rowIsFull = true;
 			for (int column = halfRow%2; column < COLUMNS; column += 2){
-				if (getHexagonColor(column, halfRow) == null){
+				if (board.getHexagonColor(column, halfRow) == null){
 					rowIsFull = false;
 					break;
 				}
@@ -221,7 +222,7 @@ public class HexagonTetris extends JPanel {
 			isInAnimation = true;
 			completeHalfRows.forEach(halfRow -> {
 				for (int column = halfRow%2; column < COLUMNS; column += 2){
-					setHexagonColor(column, halfRow, Color.WHITE);
+					board.setHexagonColor(column, halfRow, Color.WHITE);
 				}
 			});
 			repaint();
@@ -261,37 +262,8 @@ public class HexagonTetris extends JPanel {
 
 	private void removeHexagon(int column, int halfRow){
 		for (int y = halfRow; y > halfRow % 2; y -= 2){
-			setHexagonColor(column, y, getHexagonColor(column, y - 2));
+			board.setHexagonColor(column, y, board.getHexagonColor(column, y - 2));
 		}
-		setHexagonColor(column, halfRow % 2, null);
-	}
-
-	// Getters and setters. |------------------------------------------------------------------------------------------
-	private void setHexagonColor(Coordinate coordinate, Color color){
-		setHexagonColor(coordinate.x , coordinate.y, color);
-	}
-	private void setHexagonColor(int x, int y, Color color){
-		getHexagonAt(x, y).color = color;
-	}
-	private Color getHexagonColor(Coordinate coordinate){
-		return getHexagonColor(coordinate.x , coordinate.y);
-	}
-	private Color getHexagonColor(int x, int y){
-		return getHexagonAt(x, y).color;
-	}
-	private Hexagon getHexagonAt(Coordinate coordinate){
-		return getHexagonAt(coordinate.x, coordinate.y);
-	}
-	private Hexagon getHexagonAt(int x, int y){
-		int doubleY = (y-x%2);
-		if (doubleY % 2 != 0){
-			System.out.printf("Column %d does not have hexagon at height %d!%n", x, y);
-			return null;
-		}
-		try {
-			return hexagonGrid[x][doubleY/2];
-		} catch (ArrayIndexOutOfBoundsException e){
-			return null;
-		}
+		board.setHexagonColor(column, halfRow % 2, null);
 	}
 }

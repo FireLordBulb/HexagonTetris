@@ -7,7 +7,7 @@ public class Main {
         UIManager.setLookAndFeel("javax.swing.plaf.nimbus.NimbusLookAndFeel");
         EventQueue.invokeLater(() -> {
             JFrame frame = new JFrame();
-            frame.setSize(600, 800);
+            frame.setSize(660, 800);
             frame.setTitle("Hexagon Tetris");
             frame.setVisible(true);
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
