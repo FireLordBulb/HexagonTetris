@@ -63,7 +63,7 @@ public class HexagonTetris extends JPanel {
 			case KeyEvent.VK_RIGHT, KeyEvent.VK_D -> movePieceToSide(RIGHT);
 			case KeyEvent.VK_Z -> rotatePiece(LEFT);
 			case KeyEvent.VK_UP, KeyEvent.VK_W, KeyEvent.VK_X -> rotatePiece(RIGHT);
-			case KeyEvent.VK_DOWN, KeyEvent.VK_S -> tryMovePieceDown();
+			case KeyEvent.VK_DOWN, KeyEvent.VK_S -> movePieceDownManually();
 			case KeyEvent.VK_SPACE -> hardDrop();
 		}
 	}
@@ -82,7 +82,16 @@ public class HexagonTetris extends JPanel {
 		// Toggle this boolean to make the piece alternate between moving to the side and slightly up and moving to the side and slightly down.
 		pieceIsAtLowest = !pieceIsAtLowest;
 	}
+	private void movePieceDownManually(){
+		// Stop and start the fall timer to ensure it takes the full period before then next move down.
+		fallTimer.cancel();
+		startFallTimer();
+		tryMovePieceDown();
+	}
 	private void hardDrop(){
+		// Stop and start the fall timer to ensure it takes the full period before then next move down.
+		fallTimer.cancel();
+		startFallTimer();
 		// The while loop is empty because tryMovePieceDown has side effects.
 		// noinspection StatementWithEmptyBody
 		while (!tryMovePieceDown());
