@@ -9,23 +9,27 @@ import java.util.List;
 import java.util.Timer;
 
 public class HexagonTetris extends JPanel {
-	// Public static constants.
+	// Visual static constants.
 	public static final Color BACKGROUND_COLOR = new Color(0x202020);
 	public static final Color PAUSE_SHADOW_COLOR = new Color(0, 0, 0, 60);
 	public static final Color GAME_OVER_SHADOW_COLOR = new Color(0, 0, 0, 160);
-	// Private static constants.
-	private static final int LEFT = -1, RIGHT = +1, UP = -1, DOWN = +1;
+	private static final int HEXAGON_SIZE = 20;
+	private static final int TEXT_LINE_HEIGHT = 15;
 	private static final int BOARD_X = 150, BOARD_Y = 40;
 	private static final int INFO_PANEL_X = 340, INFO_PANEL_Y = 360;
-	private static final int HEXAGON_SIZE = 20;
-	private static final int COLUMNS = 10, ROWS = 21, INVISIBLE_ROWS = 1, HALF_ROWS = ROWS*2;
-	private static final int NEXT_WINDOW_COLUMNS = 3, NEXT_ROWS = 4, NEXT_COLUMN_OFFSET = 18, NEXT_ROW_OFFSET = 6;
+	private static final int BOARD_CENTER_TEXT_X = HEXAGON_SIZE*27/4, BOARD_CENTER_TEXT_Y = 305;
+	private static final int INVISIBLE_ROWS = 1, NEXT_WINDOW_COLUMN_OFFSET = 18, NEXT_WINDOW_ROW_OFFSET = 6;
+	// Gameplay static constants.
+	private static final int COLUMNS = 10, ROWS = 20+INVISIBLE_ROWS, HALF_ROWS = ROWS*2;
+	private static final int NEXT_WINDOW_COLUMNS = 3, NEXT_WINDOW_ROWS = 4;
+	private static final int LEFT = -1, RIGHT = +1, UP = -1, DOWN = +1;
 	private static final Coordinate oneStepDown = new Coordinate(0, 2);
+
 	private static final int LINE_CLEAR_ANIMATION_TIME = 1000;
 	private static final int UNPAUSE_DELAY = 1000;
 	// Final instance fields (collections).
 	private final HexagonGrid board = new HexagonGrid(COLUMNS, ROWS, HEXAGON_SIZE, 0, -INVISIBLE_ROWS);
-	private final HexagonGrid nextWindow = new HexagonGrid(NEXT_WINDOW_COLUMNS, NEXT_ROWS, HEXAGON_SIZE, NEXT_COLUMN_OFFSET, NEXT_ROW_OFFSET-INVISIBLE_ROWS);
+	private final HexagonGrid nextWindow = new HexagonGrid(NEXT_WINDOW_COLUMNS, NEXT_WINDOW_ROWS, HEXAGON_SIZE, NEXT_WINDOW_COLUMN_OFFSET, NEXT_WINDOW_ROW_OFFSET -INVISIBLE_ROWS);
 	private final List<Integer> completeHalfRows = new ArrayList<>();
 	// Changeable state.
 	private Timer fallTimer = null;
@@ -33,17 +37,19 @@ public class HexagonTetris extends JPanel {
 	private long previousFallTime = 0;
 	private int fallDelayLeft = 0;
 	private long lastPauseTime = 0;
+
+	private int highScore = 0;
+	private int score;
+	private int pushDownPoints;
+	private int level;
+	private int clearedHalfRows;
+
 	private Piece currentPiece;
 	private Piece nextPiece;
 	private boolean pieceIsAtLowest = false;
 	private boolean isInAnimation = false;
 	private boolean gameIsOver = false;
 	private boolean isPaused = false;
-	private int highScore = 0;
-	private int score;
-	private int pushDownPoints;
-	private int level;
-	private int clearedHalfRows;
 	// Constructor. |------------------------------------------------------------------------------------------
 	public HexagonTetris(){
 		setFocusable(true);
@@ -56,7 +62,7 @@ public class HexagonTetris extends JPanel {
 		});
 		restartGame();
 	}
-	// Overridden methods. |------------------------------------------------------------------------------------------
+	// Drawing methods. |------------------------------------------------------------------------------------------
 	@Override
 	protected void paintComponent(Graphics g){
 		super.paintComponent(g);
@@ -67,23 +73,31 @@ public class HexagonTetris extends JPanel {
 		nextWindow.draw(g2d, 0, true, isPaused);
 		g2d.translate(INFO_PANEL_X, INFO_PANEL_Y);
 		g2d.setColor(Color.WHITE);
-		g2d.drawString("High Score: "+highScore, 0, 0);
-		g2d.drawString("Score: "+score, 0, 15);
-		g2d.drawString("Level: "+level, 0, 30);
-		g2d.drawString("Lines: "+(clearedHalfRows/2.0), 0, 45);
+		drawLeftAlignedText(g2d, "High Score: "+highScore, "Score: "+score, "Level: "+level, "Lines: "+(clearedHalfRows/2.0));
 		if (isPaused){
-			g2d.setTransform(new AffineTransform());
-			g2d.setColor(PAUSE_SHADOW_COLOR);
-			g2d.fillRect(0, 0, getParent().getWidth(), getParent().getHeight());
-			g2d.setColor(Color.WHITE);
-			g2d.drawString("Paused", getParent().getWidth()/2 - 65, getParent().getHeight()/2 - 55);
+			drawFullScreenRectWithText(g2d, PAUSE_SHADOW_COLOR, "Paused");
 		} else if (gameIsOver){
-			g2d.setTransform(new AffineTransform());
-			g2d.setColor(GAME_OVER_SHADOW_COLOR);
-			g2d.fillRect(0, 0, getParent().getWidth(), getParent().getHeight());
-			g2d.setColor(Color.WHITE);
-			g2d.drawString("Game Over!", getParent().getWidth()/2 - 65, getParent().getHeight()/2 - 55);
-			g2d.drawString("Press R to restart", getParent().getWidth()/2 - 85, getParent().getHeight()/2 - 40);
+			drawFullScreenRectWithText(g2d, GAME_OVER_SHADOW_COLOR, "Game Over!", "Press R to restart");
+		}
+	}
+
+	private void drawLeftAlignedText(Graphics2D g, String... textLines){
+		for (int i = 0; i < textLines.length; i++){
+			g.drawString(textLines[i], 0, i*TEXT_LINE_HEIGHT);
+		}
+	}
+	
+	private void drawFullScreenRectWithText(Graphics2D g, Color color, String... textLines){
+		g.setTransform(new AffineTransform());
+		g.setColor(color);
+		g.fillRect(0, 0, getParent().getWidth(), getParent().getHeight());
+		g.translate(BOARD_X, BOARD_Y);
+		g.translate(BOARD_CENTER_TEXT_X, BOARD_CENTER_TEXT_Y);
+		g.setColor(Color.WHITE);
+		FontMetrics fontMetrics = g.getFontMetrics(g.getFont());
+		for (int i = 0; i < textLines.length; i++){
+			int textWidth = fontMetrics.stringWidth(textLines[i]);
+			g.drawString(textLines[i], -textWidth/2, i*TEXT_LINE_HEIGHT);
 		}
 	}
 	// Input methods. |------------------------------------------------------------------------------------------
