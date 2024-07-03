@@ -23,7 +23,7 @@ public class HexagonTetris extends JPanel {
 	private static final int COLUMNS = 10, ROWS = 20+INVISIBLE_ROWS, HALF_ROWS = ROWS*2;
 	private static final int NEXT_WINDOW_COLUMNS = 3, NEXT_WINDOW_ROWS = 4;
 	private static final int LEFT = -1, RIGHT = +1, UP = -1, DOWN = +1;
-	private static final Coordinate oneStepDown = new Coordinate(0, 2);
+	private static final Coordinate ONE_STEP_DOWN = new Coordinate(0, 2);
 
 	private static final int LINE_CLEAR_ANIMATION_TIME = 1000;
 	private static final int UNPAUSE_DELAY = 1000;
@@ -190,7 +190,7 @@ public class HexagonTetris extends JPanel {
 	}
 	// Movement methods. |------------------------------------------------------------------------------------------
 	private boolean tryMovePieceDown(boolean isManual){
-		boolean fallWasBlocked = tryMovePiece(oneStepDown);
+		boolean fallWasBlocked = tryMovePiece(ONE_STEP_DOWN);
 		if (isManual && !fallWasBlocked){
 			pushDownPoints++;
 		}
