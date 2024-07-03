@@ -16,9 +16,9 @@ public class HexagonTetris extends JPanel {
 	private static final int HEXAGON_SIZE = 20;
 	private static final int TEXT_LINE_HEIGHT = 15;
 	private static final int BOARD_X = 150, BOARD_Y = 40;
-	private static final int INFO_PANEL_X = 340, INFO_PANEL_Y = 360;
+	private static final int INFO_PANEL_X = 340, INFO_PANEL_Y = 300;
 	private static final int BOARD_CENTER_TEXT_X = HEXAGON_SIZE*27/4, BOARD_CENTER_TEXT_Y = 305;
-	private static final int INVISIBLE_ROWS = 1, NEXT_WINDOW_COLUMN_OFFSET = 18, NEXT_WINDOW_ROW_OFFSET = 6;
+	private static final int INVISIBLE_ROWS = 1, NEXT_WINDOW_COLUMN_OFFSET = 18, NEXT_WINDOW_ROW_OFFSET = 3;
 	// Gameplay static constants.
 	private static final int COLUMNS = 10, ROWS = 20+INVISIBLE_ROWS, HALF_ROWS = ROWS*2;
 	private static final int NEXT_WINDOW_COLUMNS = 3, NEXT_WINDOW_ROWS = 4;
@@ -29,7 +29,7 @@ public class HexagonTetris extends JPanel {
 	private static final int UNPAUSE_DELAY = 1000;
 	// Final instance fields (collections).
 	private final HexagonGrid board = new HexagonGrid(COLUMNS, ROWS, HEXAGON_SIZE, 0, -INVISIBLE_ROWS);
-	private final HexagonGrid nextWindow = new HexagonGrid(NEXT_WINDOW_COLUMNS, NEXT_WINDOW_ROWS, HEXAGON_SIZE, NEXT_WINDOW_COLUMN_OFFSET, NEXT_WINDOW_ROW_OFFSET -INVISIBLE_ROWS);
+	private final HexagonGrid nextWindow = new HexagonGrid(NEXT_WINDOW_COLUMNS, NEXT_WINDOW_ROWS, HEXAGON_SIZE, NEXT_WINDOW_COLUMN_OFFSET, NEXT_WINDOW_ROW_OFFSET);
 	private final List<Integer> completeHalfRows = new ArrayList<>();
 	// Changeable state.
 	private Timer fallTimer = null;
