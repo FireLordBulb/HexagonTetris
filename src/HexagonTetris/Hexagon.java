@@ -16,8 +16,8 @@ public class Hexagon {
         }
         color = null;
     }
-    public void draw(Graphics g){
-        g.setColor(color == null ? Color.BLACK : color);
+    public void draw(Graphics g, boolean doHideColor){
+        g.setColor(doHideColor || color == null ? Color.BLACK : color);
         g.fillPolygon(xPoints, yPoints, NUM_POINTS);
         g.setColor(HexagonTetris.BACKGROUND_COLOR);
         g.drawPolygon(xPoints, yPoints, NUM_POINTS);

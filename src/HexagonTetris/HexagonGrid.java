@@ -22,14 +22,14 @@ public class HexagonGrid {
 			}
 		}
 	}
-	public void draw(Graphics g, int skipRows, boolean doSkipFirstHalfRow){
+	public void draw(Graphics g, int skipRows, boolean doSkipFirstHalfRow, boolean doHideHexagons){
 		g.translate(xDrawOffset, yDrawOffset);
 		for (int i = 0; i < grid.length; i++){
 			int startAtRow = skipRows;
 			if (doSkipFirstHalfRow && i%2 == 0){
 				startAtRow++;
 			}
-			Arrays.stream(grid[i], startAtRow, grid[i].length).forEach(hexagon -> hexagon.draw(g));
+			Arrays.stream(grid[i], startAtRow, grid[i].length).forEach(hexagon -> hexagon.draw(g, doHideHexagons));
 		}
 		g.translate(-xDrawOffset, -yDrawOffset);
 	}
