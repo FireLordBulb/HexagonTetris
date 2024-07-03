@@ -25,7 +25,9 @@ public class HexagonTetris extends JPanel {
 	private static final int LEFT = -1, RIGHT = +1, UP = -1, DOWN = +1;
 	private static final Coordinate ONE_STEP_DOWN = new Coordinate(0, 2);
 	private static final int[] POINTS_FOR_LINE_CLEARS = {0, 0, 40, 60, 100, 150, 300, 450, 1200, 1800};
+	private static final int HALF_ROWS_PER_LEVEL = 20;
 
+	private static final int[] FALL_TIMES = {800, 717, 633, 550, 467, 383, 300, 217, 133, 100, 83, 83, 83, 67, 67, 67, 50, 50, 50, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 17};
 	private static final int LINE_CLEAR_ANIMATION_TIME = 1000;
 	private static final int UNPAUSE_DELAY = 1000;
 	// Final instance fields (collections).
@@ -34,7 +36,7 @@ public class HexagonTetris extends JPanel {
 	private final List<Integer> completeHalfRows = new ArrayList<>();
 	// Changeable state.
 	private Timer fallTimer = null;
-	private int timePerFall = 800;
+	private int timePerFall;
 	private long previousFallTime = 0;
 	private int fallDelayLeft = 0;
 	private long lastPauseTime = 0;
@@ -137,7 +139,7 @@ public class HexagonTetris extends JPanel {
 		score = 0;
 		level = 0;
 		clearedHalfRows = 0;
-		timePerFall = 800;
+		timePerFall = FALL_TIMES[level];
 		nextPiece = new Piece(nextWindow, false);
 		spawnNextPiece();
 		startFallTimer();
@@ -312,9 +314,10 @@ public class HexagonTetris extends JPanel {
 		int newHalfRows = completeHalfRows.size();
 		clearedHalfRows += newHalfRows;
 		incrementScore(POINTS_FOR_LINE_CLEARS[newHalfRows]*(level+1));
-
-		level = clearedHalfRows/20;
-
+		if (level < clearedHalfRows/HALF_ROWS_PER_LEVEL){
+			level = clearedHalfRows/HALF_ROWS_PER_LEVEL;
+			timePerFall = FALL_TIMES[Math.min(level, FALL_TIMES.length-1)];
+		}
 		completeHalfRows.clear();
 		spawnNextPiece();
 		if (!gameIsOver){
