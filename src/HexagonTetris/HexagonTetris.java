@@ -1,9 +1,8 @@
 package HexagonTetris;
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
 import java.awt.geom.AffineTransform;
+import java.io.*;
 import java.util.*;
 import java.util.List;
 import java.util.Timer;
@@ -54,6 +53,11 @@ public class HexagonTetris extends JPanel {
 	// Constructor. |------------------------------------------------------------------------------------------
 	public HexagonTetris(){
 		setBackground(BACKGROUND_COLOR);
+		try (BufferedReader reader = new BufferedReader(new FileReader("SaveData.txt"))){
+			highScore = Integer.parseInt(reader.readLine());
+		} catch (NumberFormatException | IOException e){
+			System.out.println("ERROR: Failed to read high score from file!");
+		}
 		startGame();
 	}
 	private void startGame(){
@@ -312,6 +316,11 @@ public class HexagonTetris extends JPanel {
 		score += points;
 		if (highScore < score){
 			highScore = score;
+		}
+		try (BufferedWriter writer = new BufferedWriter(new FileWriter("SaveData.txt"))){
+			writer.write(""+highScore);
+		} catch (IOException e){
+			System.out.println("ERROR: Failed to save high score to file!");
 		}
 	}
 	// Nested types. |------------------------------------------------------------------------------------------
