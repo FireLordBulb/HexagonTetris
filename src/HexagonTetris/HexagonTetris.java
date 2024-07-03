@@ -24,6 +24,7 @@ public class HexagonTetris extends JPanel {
 	private static final int NEXT_WINDOW_COLUMNS = 3, NEXT_WINDOW_ROWS = 4;
 	private static final int LEFT = -1, RIGHT = +1, UP = -1, DOWN = +1;
 	private static final Coordinate ONE_STEP_DOWN = new Coordinate(0, 2);
+	private static final int[] POINTS_FOR_LINE_CLEARS = {0, 0, 40, 60, 100, 150, 300, 450, 1200, 1800};
 
 	private static final int LINE_CLEAR_ANIMATION_TIME = 1000;
 	private static final int UNPAUSE_DELAY = 1000;
@@ -241,7 +242,7 @@ public class HexagonTetris extends JPanel {
 	}
 
 	private void findCompleteLines(){
-		score += pushDownPoints;
+		incrementScore(pushDownPoints);
 		findFullHalfRows();
 		removeIsolatedHalfRows();
 		if (completeHalfRows.isEmpty()){
@@ -310,10 +311,8 @@ public class HexagonTetris extends JPanel {
 		}
 		int newHalfRows = completeHalfRows.size();
 		clearedHalfRows += newHalfRows;
-		score += newHalfRows*100*(level+1);
-		if (highScore < score){
-			highScore = score;
-		}
+		incrementScore(POINTS_FOR_LINE_CLEARS[newHalfRows]*(level+1));
+
 		level = clearedHalfRows/20;
 
 		completeHalfRows.clear();
@@ -322,5 +321,12 @@ public class HexagonTetris extends JPanel {
 			startFallTimer();
 		}
 		isInAnimation = false;
+	}
+
+	private void incrementScore(int points){
+		score += points;
+		if (highScore < score){
+			highScore = score;
+		}
 	}
 }
