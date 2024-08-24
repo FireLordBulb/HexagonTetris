@@ -177,6 +177,9 @@ public class HexagonTetris extends JPanel {
 	}
 
 	public void rotatePiece(int rotationChange){
+		if (gameState != GameState.PLAYING){
+			return;
+		}
 		currentPiece.rotate(rotationChange);
 		repaint();
 	}
